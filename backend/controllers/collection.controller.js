@@ -19,7 +19,7 @@ exports.findAll = (req, res) => {
                 model: Livre,
                 as: 'livre',
                 through: {
-                    attributes: ['tome', 'description']
+                    attributes: ['description']
                 },
                 attributes: {
                     exclude: ['idGenre', 'idStyle']
@@ -89,7 +89,7 @@ exports.findOne = (req, res) => {
                 model: Livre,
                 as: 'livre',
                 through: {
-                    attributes: ['tome', 'description']
+                    attributes: ['description']
                 },
                 attributes: {
                     exclude: ['idGenre', 'idStyle']
@@ -145,7 +145,6 @@ exports.create = (req, res) => {
                             UserLivre.create({
                                 idUser: req.body.id,
                                 idLivre: data.dataValues.id,
-                                tome: req.body.tome,
                                 description: req.body.description
                             })
                                 .then(data => {
@@ -169,7 +168,6 @@ exports.create = (req, res) => {
                         UserLivre.create({
                             idUser: req.body.id,
                             idLivre: data.dataValues.id,
-                            tome: req.body.tome,
                             description: req.body.description
                         })
                             .then(data => {
@@ -238,7 +236,6 @@ exports.update = (req, res) => {
         .then(data => {
             if (data) {
                 UserLivre.update({
-                    tome: req.body.tome,
                     description: req.body.description
                 }, {
                     where: {
@@ -259,7 +256,6 @@ exports.update = (req, res) => {
                     .then(data => {
                         UserLivre.update({
                             idLivre: data.dataValues.id,
-                            tome: req.body.tome,
                             description: req.body.description
                         }, {
                             where: {
