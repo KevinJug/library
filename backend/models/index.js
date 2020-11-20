@@ -18,34 +18,62 @@ const db = {};
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 db.user = require('./user.model')(sequelize, Sequelize);
-db.livre = require('./livre.model')(sequelize, Sequelize);
+db.collection = require('./collection.model')(sequelize, Sequelize);
 db.role = require('./role.model')(sequelize, Sequelize);
-db.style = require('./style.model')(sequelize, Sequelize);
+db.type = require('./type.model')(sequelize, Sequelize);
 db.genre = require('./genre.model')(sequelize, Sequelize);
-db.user_livre = require('./user_livre.model')(sequelize, Sequelize);
+db.auteur = require('./auteur.model')(sequelize, Sequelize);
+db.editeur = require('./editeur.model')(sequelize, Sequelize);
+db.user_collection = require('./user_collection.model')(sequelize, Sequelize);
 
-db.genre.hasMany(db.livre, {
+db.genre.hasMany(db.collection, {
     foreignKey: {
         name: 'idGenre',
         allowNull: false
     }
 });
-db.livre.belongsTo(db.genre, {
+db.collection.belongsTo(db.genre, {
     foreignKey: {
         name: 'idGenre',
         allowNull: false
     }
 });
 
-db.style.hasMany(db.livre, {
+db.auteur.hasMany(db.collection, {
     foreignKey: {
-        name: 'idStyle',
+        name: 'idAuteur',
         allowNull: false
     }
 });
-db.livre.belongsTo(db.style, {
+db.collection.belongsTo(db.auteur, {
     foreignKey: {
-        name: 'idStyle',
+        name: 'idAuteur',
+        allowNull: false
+    }
+});
+
+db.editeur.hasMany(db.collection, {
+    foreignKey: {
+        name: 'idEditeur',
+        allowNull: false
+    }
+});
+db.collection.belongsTo(db.editeur, {
+    foreignKey: {
+        name: 'idEditeur',
+        allowNull: false
+    }
+});
+
+db.type.hasMany(db.collection, {
+    foreignKey: {
+        name: 'idType',
+        allowNull: false
+    }
+});
+db.collection.belongsTo(db.type, {
+    foreignKey: {
+        name: 'idType',
         allowNull: false
     }
 });
@@ -63,19 +91,19 @@ db.user.belongsTo(db.role, {
     }
 });
 
-db.user.belongsToMany(db.livre, {
-    as: 'livre',
-    through: db.user_livre,
+db.user.belongsToMany(db.collection, {
+    as: 'collection',
+    through: db.user_collection,
     foreignKey: {
         name: 'idUser',
         allowNull: false
     }
 });
-db.livre.belongsToMany(db.user, {
+db.collection.belongsToMany(db.user, {
     as: 'utilisateur',
-    through: db.user_livre,
+    through: db.user_collection,
     foreignKey: {
-        name: 'idLivre',
+        name: 'idCollection',
         allowNull: false
     }
 });

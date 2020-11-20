@@ -1,13 +1,13 @@
 module.exports = (sequelize, Sequelize) => {
 
-    return sequelize.define('type', {
+    return sequelize.define('auteur', {
         id : {
             type : Sequelize.INTEGER,
             primaryKey : true,
             autoIncrement: true
         },
-        libelle : {
-            type : Sequelize.STRING(50),
+        auteur : {
+            type : Sequelize.STRING(100),
             unique : true,
             allowNull : false
         }

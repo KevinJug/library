@@ -1,9 +1,11 @@
 const db = require('../models');
 const Genre = db.genre;
-const Style = db.style;
-const Livre = db.livre;
+const Type = db.type;
+const Auteur = db.auteur;
+const Editeur = db.editeur;
+const Collection = db.collection;
 const User = db.user;
-const UserLivre = db.user_livre;
+const UserCollection = db.user_collection;
 
 exports.findAll = (req, res) => {
 
@@ -12,21 +14,23 @@ exports.findAll = (req, res) => {
             id: req.body.id
         },
         attributes: {
-            exclude: ['activer', 'idRole']
+            exclude: ['activer', 'idRole', 'mdp', 'email', 'pseudo']
         },
         include: [
             {
-                model: Livre,
-                as: 'livre',
+                model: Collection,
+                as: 'collection',
                 through: {
                     attributes: ['description']
                 },
                 attributes: {
-                    exclude: ['idGenre', 'idStyle']
+                    exclude: ['idGenre', 'idType', 'idAuteur', 'idEditeur']
                 },
                 include: [
                     {model: Genre, nested: true},
-                    {model: Style, nested: false},
+                    {model: Type, nested: false},
+                    {model: Auteur, nested: false},
+                    {model: Editeur, nested: false},
                 ]
             }
         ]
@@ -57,9 +61,9 @@ exports.findGenre = (req, res) => {
 
 };
 
-exports.findStyle = (req, res) => {
+exports.findType = (req, res) => {
 
-    Style.findAll()
+    Type.findAll()
         .then(data => {
             res.status(200).send(data)
         })
@@ -86,26 +90,34 @@ exports.findOne = (req, res) => {
         },
         include: [
             {
-                model: Livre,
-                as: 'livre',
+                model: Collection,
+                as: 'collection',
                 through: {
                     attributes: ['description']
                 },
                 attributes: {
-                    exclude: ['idGenre', 'idStyle']
+                    exclude: ['idGenre', 'idType', 'idAuteur', 'idEditeur']
                 },
                 include: [
                     {model: Genre, nested: true},
-                    {model: Style, nested: false},
+                    {model: Type, nested: false},
+                    {model: Auteur, nested: false},
+                    {model: Editeur, nested: false},
                 ],
-                where : {
-                    id : req.params.id
+                where: {
+                    id: req.params.id
                 }
             }
         ]
     })
         .then(data => {
-            res.status(200).send(data)
+            if (data) {
+                res.status(200).send(data)
+            } else {
+                res.status(400).send({
+                    message: 'Non trouvé!'
+                })
+            }
         })
         .catch(e => {
             console.log(e);
@@ -116,90 +128,116 @@ exports.findOne = (req, res) => {
 
 };
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
 
-    const livre = {
+    const t = await db.sequelize.transaction({autocommit: true});
+
+    const collection = {
         titre: req.body.titre,
-        auteur: req.body.auteur,
         idGenre: req.body.genre,
-        idStyle: req.body.style
+        idType: req.body.type,
+        idAuteur: req.body.auteur,
+        idEditeur: req.body.editeur,
     };
 
-    Livre.findOne({
-        where: livre
+    await Auteur.findOrCreate(
+        {
+            where:
+                {
+                    auteur: collection['idAuteur']
+                },
+            transaction: t
+        }
+    )
+        .then(async data => {
+            collection['idAuteur'] = data[0].dataValues.id
+        })
+        .catch(async e => {
+            console.log(e);
+            await t.rollback();
+            res.status(400).send({
+                message: e
+            })
+        });
+
+    await Editeur.findOrCreate(
+        {
+            where:
+                {
+                    editeur: collection['idEditeur']
+                },
+            transaction: t
+        }
+    )
+        .then(async data => {
+            collection['idEditeur'] = data[0].dataValues.id
+        })
+        .catch(async e => {
+            console.log(e);
+            await t.rollback();
+            res.status(400).send({
+                message: e
+            })
+        });
+
+    const userCollection = {
+        idUser: req.body.id,
+        idCollection: 0
+    };
+
+    await Collection.findOrCreate({
+        where: collection,
+        transaction: t
     })
-        .then(data => {
+        .then(async data => {
+            userCollection['idCollection'] = data[0].dataValues.id;
+        })
+        .catch(async e => {
+            await t.rollback();
+            res.status(400).send({
+                message: e
+            })
+        });
+
+    UserCollection.findOne({
+        where: userCollection,
+        transaction: t
+    })
+        .then(async data => {
             if (data) {
-                UserLivre.findOne({
-                    where: {
-                        idUser: req.body.id,
-                        idLivre: data.dataValues.id
-                    }
+                await t.rollback();
+                res.status(400).send({
+                    message: "Vous avez déjà ajouté ce livre."
                 })
-                    .then(data => {
-                        if (data) {
-                            res.status(400).send({
-                                message: "Vous avez déjà ajouté ce livre."
-                            })
-                        } else {
-                            UserLivre.create({
-                                idUser: req.body.id,
-                                idLivre: data.dataValues.id,
-                                description: req.body.description
-                            })
-                                .then(data => {
-                                    res.status(200).send(data);
-                                })
-                                .catch(e => {
-                                    res.status(400).send({
-                                        message: e
-                                    })
-                                })
-                        }
-                    })
-                    .catch(e => {
-                        res.status(400).send({
-                            message: e
-                        })
-                    })
             } else {
-                Livre.create(livre)
-                    .then(data => {
-                        UserLivre.create({
-                            idUser: req.body.id,
-                            idLivre: data.dataValues.id,
-                            description: req.body.description
-                        })
-                            .then(data => {
-                                res.status(200).send(data);
-                            })
-                            .catch(e => {
-                                res.status(400).send({
-                                    message: e
-                                })
-                            })
+                userCollection['description'] = req.body.description;
+                UserCollection.create(userCollection, {transaction: t})
+                    .then(async data => {
+                        await t.commit();
+                        res.status(200).send(data);
                     })
-                    .catch(e => {
+                    .catch(async e => {
+                        await t.rollback();
                         res.status(400).send({
                             message: e
                         })
                     })
             }
         })
-        .catch(e => {
+        .catch(async e => {
+            await t.rollback();
             res.status(400).send({
                 message: e
             })
         })
-
 };
 
 exports.delete = (req, res) => {
 
-    UserLivre.delete({
+    UserCollection.delete({
         where: {
             idUser: req.body.id,
-            idLivre: req.params.id
+            idCollection: req.params.id
         }
     })
         .then(data => {
@@ -221,68 +259,185 @@ exports.delete = (req, res) => {
 
 };
 
-exports.update = (req, res) => {
+exports.update = async (req, res) => {
 
-    const livre = {
+    const t = await db.sequelize.transaction({autocommit: true});
+
+    const collection = {
         titre: req.body.titre,
-        auteur: req.body.auteur,
-        genre: req.body.genre,
-        style: req.body.style
+        idGenre: req.body.genre,
+        idType: req.body.type,
+        idAuteur: req.body.auteur,
+        idEditeur: req.body.editeur,
     };
 
-    Livre.findOne({
-        where: livre
-    })
-        .then(data => {
-            if (data) {
-                UserLivre.update({
-                    description: req.body.description
-                }, {
-                    where: {
-                        idUser: req.body.id,
-                        idLivre: req.params.id
-                    }
-                })
-                    .then(data => {
-                        res.status(200).send(data);
-                    })
-                    .catch(e => {
-                        res.status(400).send({
-                            message: e
-                        })
-                    })
-            } else {
-                Livre.create(livre)
-                    .then(data => {
-                        UserLivre.update({
-                            idLivre: data.dataValues.id,
-                            description: req.body.description
-                        }, {
-                            where: {
-                                idUser: req.body.id,
-                                idLivre: req.params.id
-                            }
-                        })
-                            .then(data => {
-                                res.status(200).send(data);
-                            })
-                            .catch(e => {
-                                res.status(400).send({
-                                    message: e
-                                })
-                            })
-                    })
-                    .catch(e => {
-                        res.status(400).send({
-                            message: e
-                        })
-                    })
-            }
+
+    await Auteur.findOrCreate(
+        {
+            where:
+                {
+                    auteur: collection['idAuteur']
+                },
+            transaction: t
+        }
+    )
+        .then(async data => {
+            collection['idAuteur'] = data[0].dataValues.id
         })
-        .catch(e => {
+        .catch(async e => {
+            await t.rollback();
             res.status(400).send({
                 message: e
             })
+        });
+
+    await Editeur.findOrCreate(
+        {
+            where:
+                {
+                    editeur: collection['idEditeur']
+                },
+            transaction: t
+        }
+    )
+        .then(async data => {
+            collection['idEditeur'] = data[0].dataValues.id
         })
+        .catch(async e => {
+            console.log(e);
+            await t.rollback();
+            res.status(400).send({
+                message: e
+            })
+        });
+
+    const userCollection = {
+        idUser: req.body.id,
+        idCollection: 0
+    };
+
+    await Collection.findOrCreate({
+        where: collection,
+        transaction: t
+    })
+        .then(async data => {
+            userCollection['idCollection'] = data[0].dataValues.id;
+        })
+        .catch(async e => {
+            await t.rollback();
+            res.status(400).send({
+                message: e
+            })
+        });
+
+    UserCollection.update({
+        idCollection: userCollection['idCollection'],
+        description: req.body.description
+    }, {
+        where: {
+            idUser: req.body.id,
+            idCollection: req.params.id
+        },
+        transaction: t
+    })
+        .then(async data => {
+            await t.commit();
+            res.status(200).send(data);
+        })
+        .catch(async e => {
+            await t.rollback();
+            res.status(400).send({
+                message: e
+            })
+        });
+
+    // UserCollection.findOne({
+    //     where: userCollection,
+    //     transaction: t
+    // })
+    //     .then(async data => {
+    //         if (data) {
+    //             await t.rollback();
+    //             res.status(400).send({
+    //                 message: "Vous avez déjà ajouté ce livre."
+    //             })
+    //         } else {
+    //             userCollection['description'] = req.body.description;
+    //             UserCollection.create(userCollection, {transaction: t})
+    //                 .then(async data => {
+    //                     await t.commit();
+    //                     res.status(200).send(data);
+    //                 })
+    //                 .catch(async e => {
+    //                     await t.rollback();
+    //                     res.status(400).send({
+    //                         message: e
+    //                     })
+    //                 })
+    //         }
+    //     })
+    //     .catch(async e => {
+    //         await t.rollback();
+    //         res.status(400).send({
+    //             message: e
+    //         })
+    //     })
+    //
+    //
+    // Collection.findOne({
+    //     where: collection
+    // })
+    //     .then(data => {
+    //         if (data) {
+    //             UserCollection.update({
+    //                 description: req.body.description
+    //             }, {
+    //                 where: {
+    //                     idUser: req.body.id,
+    //                     idCollection: req.params.id
+    //                 }
+    //             })
+    //                 .then(data => {
+    //                     res.status(200).send(data);
+    //                 })
+    //                 .catch(e => {
+    //                     res.status(400).send({
+    //                         message: e
+    //                     })
+    //                 })
+    //         } else {
+    //             Collection.create(collection)
+    //                 .then(data => {
+    //                     UserCollection.update({
+    //                         idCollection: data.dataValues.id,
+    //                         description: req.body.description
+    //                     }, {
+    //                         where: {
+    //                             idUser: req.body.id,
+    //                             idCollection: req.params.id
+    //                         }
+    //                     })
+    //                         .then(data => {
+    //                             res.status(200).send(data);
+    //                         })
+    //                         .catch(e => {
+    //                             res.status(400).send({
+    //                                 message: e
+    //                             })
+    //                         })
+    //                 })
+    //                 .catch(e => {
+    //                     res.status(400).send({
+    //                         message: e
+    //                     })
+    //                 })
+    //         }
+    //     })
+    //     .catch(e => {
+    //         res.status(400).send({
+    //             message: e
+    //         })
+    //     })
 
 };
+

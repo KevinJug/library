@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const livres = require('../controllers/livre.controller');
+const collections = require('../controllers/collection.controller');
 const authUtilisateur = require('../middleware/authUtilisateur');
 
-router.get('/findAll',livres.findAll);
-router.get('/findOne/:id',livres.findOne);
-router.get('/findFiltre',livres.findFiltre);
-router.get('/findGenre',livres.findGenre);
-router.get('/findStyle',livres.findStyle);
+router.get('/findAll',collections.findAll);
+router.get('/findOne/:id',collections.findOne);
+router.get('/findFiltre',collections.findFiltre);
+router.get('/findGenre',collections.findGenre);
+router.get('/findType',collections.findType);
 
-router.post('/create', livres.create);
+router.post('/create', collections.create);
 
-router.put('/update/:id', livres.update);
+router.put('/update/:id', collections.update);
 
-router.delete('/delete/:id', livres.delete);
+router.delete('/delete/:id', collections.delete);
 
 module.exports = router;
