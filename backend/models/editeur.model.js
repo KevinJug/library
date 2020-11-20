@@ -1,13 +1,13 @@
 module.exports = (sequelize, Sequelize) => {
 
-    return sequelize.define('type', {
+    return sequelize.define('editeur', {
         id : {
             type : Sequelize.INTEGER,
             primaryKey : true,
             autoIncrement: true
         },
-        libelle : {
-            type : Sequelize.STRING(50),
+        editeur : {
+            type : Sequelize.STRING(100),
             unique : true,
             allowNull : false
         }

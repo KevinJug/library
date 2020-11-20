@@ -1,16 +1,12 @@
 module.exports = (sequelize, Sequelize) =>{
 
-    return sequelize.define('livre', {
+    return sequelize.define('collection', {
         id : {
             type : Sequelize.INTEGER,
             primaryKey : true,
             autoIncrement: true
         },
         titre : {
-            type : Sequelize.STRING(150),
-            allowNull: false
-        },
-        auteur : {
             type : Sequelize.STRING(150),
             allowNull: false
         }

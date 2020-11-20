@@ -6,14 +6,14 @@ const PORT = process.env.PORT | 8080;
 
 const db = require('./models/index');
 const userRouter = require('./routers/user.router');
-const livreRouter = require('./routers/livre.router');
+const collectionRouter = require('./routers/collection.router');
 
 app.use(cors());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
-app.use(function(req,res,next){
+app.use(function (req, res, next) {
     db.sequelize
         .authenticate()
         .then(async () => {
@@ -24,7 +24,7 @@ app.use(function(req,res,next){
             (e) => {
                 console.log(e);
                 res.send({
-                    message : e
+                    message: e
                 })
             });
 
@@ -32,7 +32,7 @@ app.use(function(req,res,next){
 
 
 app.use('/user', userRouter);
-app.use('/livre', livreRouter);
+app.use('/collection', collectionRouter);
 
 app.listen(PORT, function () {
     console.log(`Le port est ${PORT}`)
