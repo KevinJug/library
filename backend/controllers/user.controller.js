@@ -35,24 +35,25 @@ exports.create = async (req, res) => {
     const mdp = req.body.mdp;
     const email = req.body.email;
 
-    const regexPseudo = /^[0-9A-Za-zàáâäçèéêëìíîïñòóôöùúûü]$/;
-    const autorisePseudo = 'minuscules, majuscules, chiffres, accents';
+    const regexPseudo = /^[0-9A-Za-zàáâäçèéêëìíîïñòóôöùúûü]*$/;
+    const autorisePseudo = 'Le champ accepte des minuscules, majuscules, chiffres, accents';
     const regexEmail = /^(([0-9A-Za-z-]+(.[0-9A-Za-z-"]+))|(".+"))@(([[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}])|(([a-zA-Z-0-9]+.)+[a-zA-Z]{2,}))$/;
-    const autoriseEmail = 'minuscules, majuscules, chiffres et points';
+    const autoriseEmail = 'Le format doit être sous forme d\'un email avec des minuscules, majuscules, chiffres et points';
     const regexMdp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,10}$/;
-    const autoriseMdp = 'entre 8 et 10 caractères et au moins une minuscule, une majuscule, un chiffre et un caractère : @$!%*?&';
+    const autoriseMdp = 'Le mot de passe doit avoir entre 8 et 10 caractères et au moins une minuscule, une majuscule, un chiffre et un caractère : @$!%*?&';
 
     const erreurs = [];
 
     let resultat;
 
-    resultat = await verification.verificationPERT(pseudo, User, 'pseudo', regexPseudo, autorisePseudo, 3, 40);
-
+    resultat = await verification.verificationPERT(pseudo, 'users', 'pseudo', regexPseudo, autorisePseudo, 3, 40);
+console.log(resultat)
+console.log(resultat.length)
     if (resultat.length > 0) {
         erreurs.push({pseudo: resultat});
     }
 
-    resultat = await verification.verificationPERT(email, User, 'email', regexEmail, autoriseEmail, 3, 150);
+    resultat = await verification.verificationPERT(email, 'users', 'email', regexEmail, autoriseEmail, 3, 150);
 
     if (resultat.length > 0) {
         erreurs.push({email: resultat});
@@ -81,7 +82,13 @@ exports.create = async (req, res) => {
 
                 User.create(user)
                     .then(data => {
-                        res.status(200).send(data)
+                        res.status(200).send({
+                            message: [{
+                                inscription: [
+                                    {etat: "Vous êtes inscrit."},
+                                ]
+                            }]
+                        })
                     })
                     .catch(e => {
                         res.status(500).send({
@@ -131,15 +138,23 @@ exports.login = (req, res) => {
     })
         .then(data => {
             if (!data) {
-                res.status(200).send({
-                    message: 'Pseudo ou email incorrect !'
+                res.status(400).send({
+                    message: [{
+                        connexion: [
+                            {erreur: "Le login (email ou pseudo) est incorrecte."},
+                        ]
+                    }]
                 })
             }
             bcrypt.compare(mdp, data.dataValues.mdp)
                 .then(valid => {
                     if (!valid) {
                         return res.status(401).send({
-                            message: "Mot de passe incorrecte !"
+                            message: [{
+                                connexion: [
+                                    {erreur: "Le mot de passe est incorrecte."},
+                                ]
+                            }]
                         })
                     }
 
@@ -178,19 +193,19 @@ exports.login = (req, res) => {
         })
 };
 
-exports.etat = (req, res) => {
+exports.etat = async (req, res) => {
 
     const erreurs = [];
     const active = req.body.active;
-    const id = req.body.id;
+    const id = req.params.id;
     let resultat;
 
-    resultat = verification.verificationBoolean(active);
+    resultat = await verification.verificationBoolean(active);
     if (resultat.length > 0) {
         erreurs.push({active: resultat});
     }
 
-    resultat = verification.verificationIntegerNE(id, User, 'id');
+    resultat = await verification.verificationIntegerNE(id, 'users', 'id');
     if (resultat.length > 0) {
         erreurs.push({user: resultat});
     }

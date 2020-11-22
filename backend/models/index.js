@@ -8,7 +8,7 @@ const sequelize = new Sequelize(
     {
         host: process.env.HOST,
         dialect: process.env.DIALECT,
-        operatorsAliases: Sequelize.Op,
+        // operatorsAliases: Sequelize.Op,
         pool: {
             max: parseInt(process.env.POOLMAX),
             min: parseInt(process.env.POOLMIN),

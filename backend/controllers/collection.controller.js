@@ -8,13 +8,13 @@ const User = db.user;
 const UserCollection = db.user_collection;
 const verification = require('../security/index');
 
-exports.findAll = (req, res) => {
+exports.findAll = async (req, res) => {
 
     const id = req.body.id;
     const erreurs = [];
     let resultat;
 
-    resultat = verification.verificationIntegerNE(id, User, 'id');
+    resultat = await verification.verificationIntegerNE(id, 'users', 'id');
     if (resultat.length > 0) {
         erreurs.push({user: resultat});
     }
@@ -112,7 +112,7 @@ exports.findFiltre = (req, res) => {
 
 };
 
-exports.findOne = (req, res) => {
+exports.findOne = async (req, res) => {
 
     const idUser = req.body.id;
     const idCollection = req.params.id;
@@ -120,12 +120,12 @@ exports.findOne = (req, res) => {
     const erreurs = [];
     let resultat;
 
-    resultat = verification.verificationIntegerNE(idUser, User, 'id');
+    resultat = await verification.verificationIntegerNE(idUser, 'users', 'id');
     if (resultat.length > 0) {
         erreurs.push({user: resultat});
     }
 
-    resultat = verification.verificationIntegerNE(idCollection, Collection, 'id');
+    resultat = await verification.verificationIntegerNE(idCollection, 'collections', 'id');
     if (resultat.length > 0) {
         erreurs.push({collection: resultat});
     }
@@ -214,42 +214,43 @@ exports.create = async (req, res) => {
     const erreurs = [];
     let resultat;
 
-    resultat = await verification.verificationIntegerNE(idUser, User, 'id');
+    resultat = await verification.verificationIntegerNE(idUser, 'users', 'id');
     if (resultat.length > 0) {
         erreurs.push({user: resultat});
     }
 
-    resultat = await verification.verificationIntegerNE(idType, Type, 'id');
+    resultat = await verification.verificationIntegerNE(idType, 'types', 'id');
     if (resultat.length > 0) {
         erreurs.push({type: resultat});
     }
 
-    resultat = await verification.verificationIntegerNE(idGenre, Genre, 'id');
+    resultat = await verification.verificationIntegerNE(idGenre, 'genres', 'id');
     if (resultat.length > 0) {
         erreurs.push({genre: resultat});
     }
 
-    resultat = verification.verificationPRT(titre, regex, autorise, 1, 150);
+    resultat = await verification.verificationPRT(titre, regex, autorise, 1, 150);
     if (resultat.length > 0) {
         erreurs.push({titre: resultat});
     }
 
-    resultat = verification.verificationPRT(idAuteur, regex, autorise, 1, 100);
+    resultat = await verification.verificationPRT(idAuteur, regex, autorise, 1, 100);
     if (resultat.length > 0) {
-        erreurs.push({titre: resultat});
+        erreurs.push({auteur: resultat});
     }
 
-    resultat = verification.verificationPRT(idEditeur, regex, autorise, 1, 100);
+    resultat = await verification.verificationPRT(idEditeur, regex, autorise, 1, 100);
     if (resultat.length > 0) {
-        erreurs.push({titre: resultat});
+        erreurs.push({editeur: resultat});
     }
 
-    resultat = verification.verificationRT(description, regexDesc, autoriseDesc, 0, 250);
+    resultat = await verification.verificationRT(description, regexDesc, autoriseDesc, 0, 250);
     if (resultat.length > 0) {
-        erreurs.push({titre: resultat});
+        erreurs.push({description: resultat});
     }
 
     if (Object.keys(erreurs).length > 0) {
+        await t.rollback();
         res.status(400).send({
             message: erreurs
         })
@@ -383,7 +384,7 @@ exports.create = async (req, res) => {
     }
 };
 
-exports.delete = (req, res) => {
+exports.delete = async (req, res) => {
 
     const idUser = req.body.id;
     const idCollection = req.params.id;
@@ -391,12 +392,12 @@ exports.delete = (req, res) => {
     const erreurs = [];
     let resultat;
 
-    resultat = verification.verificationIntegerNE(idUser, User, 'id');
+    resultat = await verification.verificationIntegerNE(idUser, 'users', 'id');
     if (resultat.length > 0) {
         erreurs.push({user: resultat});
     }
 
-    resultat = verification.verificationIntegerNE(idCollection, Collection, 'id');
+    resultat = await verification.verificationIntegerNE(idCollection, 'collections', 'id');
     if (resultat.length > 0) {
         erreurs.push({collection: resultat});
     }
@@ -406,7 +407,7 @@ exports.delete = (req, res) => {
             message: erreurs
         })
     } else {
-        UserCollection.delete({
+        UserCollection.destroy({
             where: {
                 idUser: idUser,
                 idCollection: idCollection
@@ -457,47 +458,48 @@ exports.update = async (req, res) => {
     const erreurs = [];
     let resultat;
 
-    resultat = await verification.verificationIntegerNE(idUser, User, 'id');
+    resultat = await verification.verificationIntegerNE(idUser, 'users', 'id');
     if (resultat.length > 0) {
         erreurs.push({user: resultat});
     }
 
-    resultat = await verification.verificationIntegerNE(idCollection, Collection, 'id');
+    resultat = await verification.verificationIntegerNE(idCollection, 'collections', 'id');
     if (resultat.length > 0) {
         erreurs.push({collection: resultat});
     }
 
-    resultat = await verification.verificationIntegerNE(idType, Type, 'id');
+    resultat = await verification.verificationIntegerNE(idType, 'types', 'id');
     if (resultat.length > 0) {
         erreurs.push({type: resultat});
     }
 
-    resultat = await verification.verificationIntegerNE(idGenre, Genre, 'id');
+    resultat = await verification.verificationIntegerNE(idGenre, 'genres', 'id');
     if (resultat.length > 0) {
         erreurs.push({genre: resultat});
     }
 
-    resultat = verification.verificationPRT(titre, regex, autorise, 1, 150);
+    resultat = await verification.verificationPRT(titre, regex, autorise, 1, 150);
     if (resultat.length > 0) {
         erreurs.push({titre: resultat});
     }
 
-    resultat = verification.verificationPRT(idAuteur, regex, autorise, 1, 100);
+    resultat = await verification.verificationPRT(idAuteur, regex, autorise, 1, 100);
     if (resultat.length > 0) {
-        erreurs.push({titre: resultat});
+        erreurs.push({auteur: resultat});
     }
 
-    resultat = verification.verificationPRT(idEditeur, regex, autorise, 1, 100);
+    resultat = await verification.verificationPRT(idEditeur, regex, autorise, 1, 100);
     if (resultat.length > 0) {
-        erreurs.push({titre: resultat});
+        erreurs.push({editeur: resultat});
     }
 
-    resultat = verification.verificationRT(description, regexDesc, autoriseDesc, 0, 250);
+    resultat = await verification.verificationRT(description, regexDesc, autoriseDesc, 0, 250);
     if (resultat.length > 0) {
-        erreurs.push({titre: resultat});
+        erreurs.push({description: resultat});
     }
 
     if (Object.keys(erreurs).length > 0) {
+        await t.rollback();
         res.status(400).send({
             message: erreurs
         })

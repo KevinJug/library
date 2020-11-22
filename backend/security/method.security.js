@@ -2,7 +2,6 @@ const db = require('../models/index');
 const {QueryTypes} = require('sequelize');
 
 exports.boolean = (erreur, parametre) => {
-
     if (parametre !== 'true' && parametre !== 'false') {
         erreur.push('La valeur doit être true ou false.');
     }
@@ -28,8 +27,9 @@ exports.integer = (erreur, parametre) => {
 
     if (isNaN(parametre) || parseInt(parametre) <= 0) {
         erreur.push('La valeur doit être un numérique positif.');
+        return false;
     }
-
+    return true;
 };
 
 exports.presence = (erreur, parametre) => {
@@ -44,7 +44,7 @@ exports.presence = (erreur, parametre) => {
 exports.regex = (erreur, parametre, regex, autorise) =>{
 
     if(!regex.test(parametre)){
-        erreur.push(`Il est autorisé : ${autorise}`);
+        erreur.push(autorise);
     }
 };
 

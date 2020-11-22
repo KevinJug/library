@@ -8,7 +8,6 @@ exports.verificationBoolean = async (parametre) => {
 
         controle.boolean(erreurs, parametre);
     }
-
     return erreurs;
 };
 
@@ -17,9 +16,9 @@ exports.verificationIntegerNE = async (parametre, table, colonne) => {
     const erreurs = [];
 
     if (controle.presence(erreurs, parametre)) {
-
-        controle.integer(erreurs, parametre);
-        await controle.nonExistant(erreurs, parametre, table, colonne)
+        if(controle.integer(erreurs, parametre)){
+            await controle.nonExistant(erreurs, parametre, table, colonne)
+        }
     }
 
     return erreurs;
