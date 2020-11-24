@@ -108,8 +108,112 @@ exports.findType = (req, res) => {
 
 };
 
-exports.findFiltre = (req, res) => {
+exports.findFiltre = async (req, res) => {
 
+
+    const idUser = req.body.id;
+    const titre = req.body.titre.trim();
+    const idAuteur = req.body.auteur.trim();
+    const idEditeur = req.body.editeur.trim();
+    const idType = req.body.type;
+    const idGenre = req.body.genre;
+    let condition = '';
+
+    const regex = /^[0-9A-Za-zàáâäçèéêëìíîïñòóôöùúûü '-]*$/;
+    const autorise = 'minuscules, majuscules, chiffres, accents, espaces, apostrophes et tirets';
+
+    const regexDesc = /^[0-9A-Za-zàáâäçèéêëìíîïñòóôöùúûü '-()]*$/;
+    const autoriseDesc = 'minuscules, majuscules, chiffres, accents, espaces, apostrophes, parenthèses et tirets';
+
+    const erreurs = [];
+    let resultat;
+
+    resultat = await verification.verificationIntegerNE(idUser, 'users', 'id');
+    if (resultat.length > 0) {
+        erreurs.push({user: resultat});
+    }
+
+    resultat = await verification.verificationIntegerNEFacultatif(idType, 'types', 'id');
+    if (resultat.length > 0) {
+        erreurs.push({type: resultat});
+    }
+
+    resultat = await verification.verificationIntegerNEFacultatif(idGenre, 'genres', 'id');
+    if (resultat.length > 0) {
+        erreurs.push({genre: resultat});
+    }
+
+    resultat = await verification.verificationPRTFacultatif(titre, regex, autorise, 1, 150);
+    if (resultat.length > 0) {
+        erreurs.push({titre: resultat});
+    }
+
+    resultat = await verification.verificationPRTFacultatif(idAuteur, regex, autorise, 1, 100);
+    if (resultat.length > 0) {
+        erreurs.push({auteur: resultat});
+    }
+
+    resultat = await verification.verificationPRTFacultatif(idEditeur, regex, autorise, 1, 100);
+    if (resultat.length > 0) {
+        erreurs.push({editeur: resultat});
+    }
+
+    if (Object.keys(erreurs).length > 0) {
+        res.status(400).send({
+            message: erreurs
+        })
+    } else {
+
+        condition = ' where u."idUser" = ' + idUser;
+
+        if (titre) {
+            condition = condition + ' AND c.titre LIKE \'%' + titre + '%\'';
+        }
+
+        if (idAuteur) {
+            condition = condition + ' AND a.auteur LIKE \'%' + idAuteur + '%\'';
+        }
+
+        if (idEditeur) {
+            condition = condition + ' AND e.editeur LIKE \'%' + idEditeur + '%\'';
+        }
+
+        if (idType) {
+            condition = condition + ' AND c."idType" = ' + idType;
+        }
+
+        if (idGenre) {
+            condition = condition + ' AND c."idGenre" = ' + idGenre;
+        }
+
+        try {
+
+            resultat = await db.sequelize.query(
+                'select u.*, c.*, a.auteur, e.editeur, t.libelle as type, g.libelle as genre from user_collections u ' +
+                'join collections c on u."idCollection" = c.id ' +
+                'join auteurs a on c."idAuteur" = a.id ' +
+                'join editeurs e on c."idEditeur" = e.id ' +
+                'join types t on c."idType" = t.id ' +
+                'join genres g on c."idGenre" = g.id ' + condition,
+                {
+                    type : db.Sequelize.QueryTypes.SELECT
+                }
+            );
+
+            res.status(200).send(resultat)
+
+        } catch (e) {
+            res.status(400).send({
+                message: [{
+                    general: [
+                        {erreur: "Un problème est survenu."},
+                        {erreur: "La requête de fitrage des collection n\'a pas eu lieu."},
+                        {erreur: "Veuillez réessayer ou contacter l'administrateur."},
+                    ]
+                }]
+            })
+        }
+    }
 };
 
 exports.findOne = async (req, res) => {
@@ -179,7 +283,6 @@ exports.findOne = async (req, res) => {
                 }
             })
             .catch(e => {
-                console.log(e);
                 res.status(400).send({
                     message: [{
                         general: [

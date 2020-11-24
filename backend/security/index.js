@@ -24,6 +24,19 @@ exports.verificationIntegerNE = async (parametre, table, colonne) => {
     return erreurs;
 };
 
+exports.verificationIntegerNEFacultatif = async (parametre, table, colonne) => {
+
+    const erreurs = [];
+
+    if (parametre) {
+        if(controle.integer(erreurs, parametre)){
+            await controle.nonExistant(erreurs, parametre, table, colonne)
+        }
+    }
+
+    return erreurs;
+};
+
 exports.verificationPR = async (parametre, regex, autorise) => {
 
     const erreurs = [];
@@ -55,6 +68,19 @@ exports.verificationPRT = async (parametre, regex, autorise, mini, maxi) => {
     const erreurs = [];
 
     if (controle.presence(erreurs, parametre)) {
+
+        controle.regex(erreurs, parametre, regex, autorise);
+        controle.taille(erreurs, parametre, mini, maxi);
+    }
+
+    return erreurs;
+};
+
+exports.verificationPRTFacultatif = async (parametre, regex, autorise, mini, maxi) => {
+
+    const erreurs = [];
+
+    if (parametre) {
 
         controle.regex(erreurs, parametre, regex, autorise);
         controle.taille(erreurs, parametre, mini, maxi);

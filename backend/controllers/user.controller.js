@@ -14,17 +14,22 @@ exports.findAll = (req, res) => {
         attributes: {
             exclude: ['mdp']
         },
-        where : {
-            activer : true
+        where: {
+            activer: true
         }
     })
         .then(data => {
             res.status(200).send(data)
         })
         .catch(err => {
-            console.log(err);
             res.status(400).send({
-                message: err
+                message: [{
+                    general: [
+                        {erreur: "Un problème est survenu."},
+                        {erreur: "La requête de sélection des utilisateurs n\'a pas eu lieu."},
+                        {erreur: "Veuillez réessayer ou contacter l'administrateur."},
+                    ]
+                }]
             })
         })
 };
@@ -47,8 +52,7 @@ exports.create = async (req, res) => {
     let resultat;
 
     resultat = await verification.verificationPERT(pseudo, 'users', 'pseudo', regexPseudo, autorisePseudo, 3, 40);
-console.log(resultat)
-console.log(resultat.length)
+
     if (resultat.length > 0) {
         erreurs.push({pseudo: resultat});
     }
@@ -124,7 +128,7 @@ exports.login = (req, res) => {
     const mdp = req.body.mdp;
 
     if (login.indexOf('@') === -1) {
-        user['pseudo'] =login
+        user['pseudo'] = login
 
     } else {
         user['email'] = login
@@ -210,7 +214,7 @@ exports.etat = async (req, res) => {
         erreurs.push({user: resultat});
     }
 
-    if(Object.keys(erreurs).length > 0) {
+    if (Object.keys(erreurs).length > 0) {
         res.status(400).send({
             message: erreurs
         })
@@ -237,7 +241,6 @@ exports.etat = async (req, res) => {
                 })
             })
     }
-
 
 
 };
