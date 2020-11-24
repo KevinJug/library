@@ -12,9 +12,12 @@ module.exports = (req, res, next) => {
             next();
         }
     } catch (e) {
-        console.log(e);
         res.send(401).send({
-            message: e | "Authentification invalide."
+            message: [{
+                general: [
+                    {erreur: "L'authentification est invalide."},
+                ]
+            }]
         })
     }
 };
