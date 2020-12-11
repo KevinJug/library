@@ -1,7 +1,7 @@
 const db = require('../models');
 const User = db.user;
 const Role = db.role;
-const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const verification = require('../security/index');
 
@@ -46,7 +46,7 @@ exports.create = async (req, res) => {
     const autoriseEmail = 'Le format doit être sous forme d\'un email avec des minuscules, majuscules, chiffres et points';
     const regexMdp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,10}$/;
     const autoriseMdp = 'Le mot de passe doit avoir entre 8 et 10 caractères et au moins une minuscule, une majuscule, un chiffre et un caractère : @$!%*?&';
-
+    const hash = crypto.crypto.createHash("sha256");
     const erreurs = [];
 
     let resultat;
@@ -74,7 +74,7 @@ exports.create = async (req, res) => {
             message: erreurs
         })
     } else {
-        bcrypt.hash(mdp, 10)
+        hash.update(mdp).digest("hex")
             .then(hash => {
                 const user = {
                     pseudo: pseudo,
@@ -123,7 +123,7 @@ exports.create = async (req, res) => {
 exports.login = (req, res) => {
 
     const user = {};
-
+    const hash = crypto.crypto.createHash("sha256");
     const login = req.body.login;
     const mdp = req.body.mdp;
 
@@ -150,9 +150,9 @@ exports.login = (req, res) => {
                     }]
                 })
             }
-            bcrypt.compare(mdp, data.dataValues.mdp)
-                .then(valid => {
-                    if (!valid) {
+            hash.update(mdp).digest("hex")
+                .then(hash => {
+                    if (hash !== data.dataValues.mdp) {
                         return res.status(401).send({
                             message: [{
                                 connexion: [
